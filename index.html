@@ -2,21 +2,26 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Receipt OCR & JSON Extractor</title>
-    <link rel="stylesheet" href="index.css">
+    <title>Handwritten Hospital Receipt Extractor</title>
     <script src="https://unpkg.com/tesseract.js@v4.0.2/dist/tesseract.min.js"></script>
+    <link rel="stylesheet" href="index.css" />
 </head>
 <body>
     <div id="container">
-        <h2>Hospital Receipt/Image OCR to JSON</h2>
+        <h2>Hospital Receipt/Form Image to JSON Extractor</h2>
+        <div id="instructions">
+            1. Upload a hospital receipt/form image.<br>
+            2. OCR will extract raw text. Review and edit key-value pairs.<br>
+            3. Click “Generate JSON” and then “Download JSON”.
+        </div>
         <input type="file" id="imageInput" accept="image/*">
-        <button id="extractBtn" disabled>Extract & Build JSON</button>
+        <button id="extractBtn" disabled>Extract Text</button>
         <div id="output"></div>
-        <button id="downloadBtn" style="display:none;">Download JSON</button>
-        <pre id="jsonResult"></pre>
+        <textarea id="jsonArea" placeholder="Key: Value&#10;Edit or add more pairs here..."></textarea>
+        <button id="generateBtn" disabled>Generate JSON</button>
+        <button id="downloadBtn" disabled>Download JSON</button>
     </div>
 
     <script src="index.js"></script>
 </body>
 </html>
-
