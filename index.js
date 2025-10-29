@@ -1,55 +1,69 @@
 const imageInput = document.getElementById('imageInput');
 const extractBtn = document.getElementById('extractBtn');
 const output = document.getElementById('output');
-const jsonResult = document.getElementById('jsonResult');
+const jsonArea = document.getElementById('jsonArea');
+const generateBtn = document.getElementById('generateBtn');
 const downloadBtn = document.getElementById('downloadBtn');
 
-let extractedJSON = {};
+let currentJSON = {};
 
 imageInput.addEventListener('change', () => {
     extractBtn.disabled = !imageInput.files.length;
+    output.textContent = '';
+    jsonArea.value = '';
+    generateBtn.disabled = true;
+    downloadBtn.disabled = true;
 });
 
 extractBtn.addEventListener('click', async () => {
     const file = imageInput.files[0];
     if (!file) return;
-
-    output.innerText = "Processing image, please wait...";
-    jsonResult.innerText = "";
-    downloadBtn.style.display = "none";
+    output.textContent = 'Processing...';
+    jsonArea.value = '';
+    generateBtn.disabled = true;
+    downloadBtn.disabled = true;
 
     const imageURL = URL.createObjectURL(file);
-    // OCR with Tesseract
     const result = await Tesseract.recognize(imageURL, 'eng', {
-        logger: m => output.innerText = `Progress: ${Math.floor(m.progress*100)}%`
+        logger: m => output.textContent = `Progress: ${Math.floor(m.progress * 100)}%`
     });
 
-    output.innerText = result.data.text || "No text found.";
-    
-    // Simple Form Field Extraction Logic (customize for your forms structure)
-    let lines = result.data.text.split('\n').filter(l => l.trim());
-    let formData = {};
+    output.textContent = result.data.text || 'No text found';
+
+    // Try to auto-split lines into key: value pairs and fill textarea for manual review
+    const lines = result.data.text.split('\n').filter(l => l.trim());
+    let parsedPairs = '';
     lines.forEach(line => {
-        // Sample basic parsing: fieldName: fieldValue
         let parts = line.split(/:|-/);
         if (parts.length >= 2) {
-            let key = parts[0].trim();
-            let value = parts.slice(1).join(':').trim();
-            formData[key] = value;
+            parsedPairs += parts[0].trim() + ': ' + parts.slice(1).join(':').trim() + '\n';
         }
     });
-
-    // If structure is different, adapt parsing as needed
-    extractedJSON = formData;
-    jsonResult.innerText = JSON.stringify(formData, null, 2);
-
-    if (Object.keys(formData).length > 0) {
-        downloadBtn.style.display = "inline-block";
+    if (parsedPairs.trim()) {
+        jsonArea.value = parsedPairs.trim();
+    } else {
+        jsonArea.value = result.data.text;
     }
+    generateBtn.disabled = false;
+});
+
+generateBtn.addEventListener('click', () => {
+    // Convert edited key-value text area into json object
+    const lines = jsonArea.value.split('\n').filter(l => l.trim());
+    let obj = {};
+    lines.forEach(line => {
+        let parts = line.split(/:|-/);
+        if (parts.length >= 2) {
+            obj[parts[0].trim()] = parts.slice(1).join(':').trim();
+        }
+    });
+    currentJSON = obj;
+    alert('JSON generated! Review output before download.');
+    downloadBtn.disabled = Object.keys(obj).length === 0;
 });
 
 downloadBtn.addEventListener('click', () => {
-    let blob = new Blob([JSON.stringify(extractedJSON, null, 2)], { type: "application/json" });
+    let blob = new Blob([JSON.stringify(currentJSON, null, 2)], { type: "application/json" });
     let url = URL.createObjectURL(blob);
     let a = document.createElement('a');
     a.href = url;
